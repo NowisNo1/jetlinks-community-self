@@ -1,5 +1,10 @@
-package org.jetlinks.community.configure.r2dbc;
+package org.jetlinks.community.rule.engine.configuration;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import org.jetlinks.community.rule.engine.entity.RuleInstanceEntity;
+import org.jetlinks.community.rule.engine.service.RuleInstanceService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -8,9 +13,9 @@ import org.springframework.web.reactive.socket.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import javax.persistence.criteria.CriteriaBuilder;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -23,6 +28,9 @@ import java.util.Map;
 @Component
 @Slf4j
 public class AdminWebSocketHandler implements WebSocketHandler {
+
+    @Autowired
+    private RuleInstanceService instanceService;
 
     // private static final String CONNECT = "connect";
     @Override
@@ -47,15 +55,21 @@ public class AdminWebSocketHandler implements WebSocketHandler {
             Mono<Void> output = session.send(
                 Flux.create(
                     sink -> {
+                        JSONObject jsonObject = new JSONObject();
                         if("server".equals(type)){
-
-                            WebSocketWrap.SERVER = new WebSocketWrap(id, session, sink);
-                            WebSocketWrap.SERVER.sendText("你好");
+                            if(WebSocketWrap.SERVER == null) {
+                                WebSocketWrap.SERVER = new WebSocketWrap(id, session, sink);
+                            }
+                            jsonObject.put("type", "string");
+                            jsonObject.put("content", "你好");
+                            WebSocketWrap.SERVER.sendText(jsonObject.toJSONString());
 
                         }else if("client".equals(type)) {
 
+                            jsonObject.put("type", "string");
+                            jsonObject.put("content", "你好");
                             WebSocketWrap.SENDER.put(id, new WebSocketWrap(id, session, sink));
-                            WebSocketWrap.SENDER.get(id).sendText("你好");
+                            WebSocketWrap.SENDER.get(id).sendText(jsonObject.toJSONString());
 
                         }
                         /*
@@ -89,6 +103,29 @@ public class AdminWebSocketHandler implements WebSocketHandler {
                         2. 确认消息的处理结果
                         3. ...
                  */
+                JSONObject jsonObject = JSON.parseObject(message.getPayloadAsText());
+                if("string".equals(jsonObject.get("type"))){
+                    System.out.println("content in json -> " + jsonObject.get("content"));
+                }else{
+                    System.out.println("json -> " + jsonObject.toJSONString());
+                    String option = jsonObject.getString("option");
+                    System.out.println("option -> " + option);
+                    switch (option){
+                        case "add":
+                            // node-red 端执行了添加 flow 的操作 这里需要获取返回的 flowId 用来更新 数据库 model_id
+
+                            instanceService.findById(jsonObject.getString("instanceId"))
+                            .doOnNext(entity -> {
+                                entity.setModelId(jsonObject.getString("flowId"));
+                            })
+                            .as(payload -> instanceService.updateById(jsonObject.getString("instanceId"), payload))
+                            .then().subscribe();
+
+                            break;
+                        default:
+
+                    }
+                }
                 break;
             case BINARY:
             case PONG:

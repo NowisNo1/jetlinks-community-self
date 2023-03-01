@@ -41,11 +41,25 @@ public class RuleEngineConfiguration {
     public AntVG6RuleModelParserStrategy antVG6RuleModelParserStrategy() {
         return new AntVG6RuleModelParserStrategy();
     }
+
+    /**
+     * @author Luo
+     * @createTime 2023-03-01
+     * @return
+     */
     @Bean
     public RuleSceneModelParserStrategy ruleSceneModelParser() {
         return new RuleSceneModelParserStrategy();
     }
-
+    /**
+     * @author Luo
+     * @createTime 2023-03-01
+     * @return
+     */
+    @Bean
+    public RuleInstanceParserStrategy RuleInstanceParser() {
+        return new RuleInstanceParserStrategy();
+    }
     @Bean
     public Scheduler localScheduler(Worker worker) {
         LocalScheduler scheduler = new LocalScheduler("local");

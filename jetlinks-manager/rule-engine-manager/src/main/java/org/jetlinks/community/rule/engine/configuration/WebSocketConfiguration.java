@@ -1,4 +1,4 @@
-package org.jetlinks.community.configure.r2dbc;
+package org.jetlinks.community.rule.engine.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,15 +16,9 @@ import java.util.Map;
  * @author luo'xing'yue
  * @createTime 2023-02-26
  * @reference https://blog.csdn.net/u011943534/article/details/124157457
- * 所有的新增 WebSocket 配置都放在 jetlinks-components/configure-component 中
+ * 所有的新增 WebSocket 配置都放在 jetlinks-manager/ rule-engine-manager 中
  */
-/*
-    需要在 pom.xml 中添加依赖
-    <dependency>
-        <groupId>org.springframework</groupId>
-        <artifactId>spring-webflux</artifactId>
-    </dependency>
- */
+
 
 /*
     // 用于生成暂时的 id

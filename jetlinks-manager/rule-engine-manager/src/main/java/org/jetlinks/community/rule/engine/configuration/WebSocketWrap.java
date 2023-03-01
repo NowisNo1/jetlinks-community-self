@@ -1,4 +1,4 @@
-package org.jetlinks.community.configure.r2dbc;
+package org.jetlinks.community.rule.engine.configuration;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,8 +23,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class WebSocketWrap {
 
-    public static final Map<String, WebSocketWrap> SENDER = new ConcurrentHashMap<>();
-    public static WebSocketWrap SERVER;
+    public static final Map<String, WebSocketWrap> SENDER = new ConcurrentHashMap<>(); // 客户端 -- 前端
+    public static WebSocketWrap SERVER = null; // 服务端 -- node-red 端
 
     private String id;
     private WebSocketSession session;

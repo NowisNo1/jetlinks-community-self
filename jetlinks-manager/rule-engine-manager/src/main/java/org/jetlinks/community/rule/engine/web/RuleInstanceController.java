@@ -1,24 +1,30 @@
 package org.jetlinks.community.rule.engine.web;
 
+import com.alibaba.fastjson.JSONObject;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.hswebframework.ezorm.rdb.exception.DuplicateKeyException;
 import org.hswebframework.web.api.crud.entity.PagerResult;
 import org.hswebframework.web.api.crud.entity.QueryOperation;
 import org.hswebframework.web.api.crud.entity.QueryParamEntity;
+import org.hswebframework.web.authorization.Authentication;
 import org.hswebframework.web.authorization.annotation.QueryAction;
 import org.hswebframework.web.authorization.annotation.Resource;
 import org.hswebframework.web.authorization.annotation.ResourceAction;
 import org.hswebframework.web.crud.service.ReactiveCrudService;
 import org.hswebframework.web.crud.web.reactive.ReactiveServiceCrudController;
+import org.hswebframework.web.exception.BusinessException;
 import org.hswebframework.web.exception.NotFoundException;
+import org.jetlinks.community.rule.engine.configuration.WebSocketWrap;
 import org.jetlinks.community.rule.engine.entity.RuleEngineExecuteEventInfo;
 import org.jetlinks.community.rule.engine.entity.RuleEngineExecuteLogInfo;
 import org.jetlinks.community.rule.engine.entity.RuleInstanceEntity;
 import org.jetlinks.community.rule.engine.service.RuleInstanceService;
+
 import org.jetlinks.rule.engine.api.RuleData;
 import org.jetlinks.rule.engine.api.RuleEngine;
 import org.jetlinks.rule.engine.api.model.RuleEngineModelParser;
@@ -29,10 +35,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 @RestController
 @RequestMapping("rule-engine/instance")
@@ -144,23 +146,28 @@ public class RuleInstanceController implements ReactiveServiceCrudController<Rul
     /**
      * @author luo'xing'yue
      * @createTime 2023-02-28
+     * @param payload
+     * @comment 创建新的 node-red 流程 -> 向 SERVER 发送信息
      */
     @RequestMapping("/create")
-    public Mono<Void> create(@RequestBody Mono<RuleInstanceEntity> payload){
+    public Mono<RuleInstanceEntity> create(@RequestBody Mono<RuleInstanceEntity> payload){
         System.out.println("params.size() -> " + payload.toString());
-        return payload
-            .doOnNext(dev -> {
-                dev.setModelVersion(1);
-                System.out.println("dev.getId() -> " + dev.getId());
-            })
-            .as(instanceService::save)
-            .then();
-//        for (Map.Entry<String, String> entry : params.entrySet()) {
-//            System.out.println("key :" + entry.getKey() + ", value : " + entry.getValue());
-//        }
-//        HashMap<String, String> ret = new HashMap<>();
-//        ret.put("error_message", "success");
-//        ret.put("something", ruleInstanceEntity.getModelMeta());
+
+
+        // 返回同时对应着对数据库数据的更新
+        return Mono
+            .zip(payload, Authentication.currentReactive(), this::applyAuthentication)
+            .flatMap(entity -> instanceService.insert(Mono.just(entity)).thenReturn(entity))
+            .onErrorMap(DuplicateKeyException.class, err -> new BusinessException("设备ID已存在", err))
+            .doOnSuccess(entity ->{
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("option", "add");
+                jsonObject.put("flowId", "");
+                jsonObject.put("instanceId", entity.getId());
+                jsonObject.put("type", "json");
+                WebSocketWrap.SERVER.sendText(jsonObject.toJSONString());
+            });
+
     }
 
     @Override
