@@ -2,7 +2,6 @@ package org.jetlinks.community.rule.engine.configuration;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import org.jetlinks.community.rule.engine.entity.RuleInstanceEntity;
 import org.jetlinks.community.rule.engine.service.RuleInstanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
@@ -13,7 +12,6 @@ import org.springframework.web.reactive.socket.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import javax.persistence.criteria.CriteriaBuilder;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
