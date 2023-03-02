@@ -50,8 +50,14 @@ public class AdminWebSocketHandler implements WebSocketHandler {
         // TODO 校验规则
         if(!"".equals(id) && !"".equals(type)){
             Mono<Void> input = session.receive().doOnNext(message -> this.messageHandle(session, message))
-                .doOnError(throwable -> log.error("webSocket 异常: " + throwable))
-                .doOnComplete(() -> log.info("webSocket结束")).then();
+                .doOnError(throwable -> {
+                    log.error("webSocket 异常: " + throwable);
+                    WebSocketWrap.SERVER = null;
+                })
+                .doOnComplete(() -> {
+                    log.info("webSocket结束");
+                    WebSocketWrap.SERVER = null;
+                }).then();
             Mono<Void> output = session.send(
                 Flux.create(
                     sink -> {

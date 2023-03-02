@@ -164,6 +164,8 @@ public class RuleInstanceController implements ReactiveServiceCrudController<Rul
                 jsonObject.put("option", "add");
                 jsonObject.put("flowId", "");
                 jsonObject.put("instanceId", entity.getId());
+                jsonObject.put("instanceName", entity.getName());
+                jsonObject.put("instanceInfo", entity.getDescription());
                 jsonObject.put("type", "json");
                 WebSocketWrap.SERVER.sendText(jsonObject.toJSONString());
             });
